@@ -1,0 +1,88 @@
+#Authelia - fichier de configuration
+
+server.address: tcp://0.0.0.0:9091/
+
+log.level: debug
+# This secret can also be set using the env variables AUTHELIA_JWT_SECRET_FILE
+identity_validation.reset_password.jwt_secret: qFKbs8wo7pyRwSLxTKvgkuRTrtdRwZP4
+#jwt_secret: YOUR_SECRET_VALUE
+#default_redirection_url: http://public.example.com
+totp:
+  issuer: example.remote
+
+authentication_backend:
+#  authentication_backend.password_reset.disable: true
+#  disable_reset_password: false    #deprecated
+  #file:
+  #  path: /config/users_database.yml
+  #  password:
+  #    algorithm: argon2id
+  #    iterations: 1
+  #    salt_length: 16
+  #    parallelism: 8
+  #    memory: 64
+
+  # How often authelia should check if there is a user update in LDAP
+  refresh_interval: 1m
+  ldap:
+      implementation: lldap
+      address: ldap://lldap:3890
+      base_dn: dc=example,dc=remote
+      user: cn=admin,ou=people,dc=example,dc=remote
+      # user with lldap_password_manager group 
+      # above user password in plain text 
+      password: password
+
+    # Disable the authelia password change and reset functionality if the "bind_user" does not have the "lldap_password_manager" permission.
+  password_reset:
+    disable: true
+  password_change:
+    disable: true
+
+access_control:
+  default_policy: deny
+  rules:
+    # Rules applied to everyone
+    - domain: whoami.example.remote
+#      policy: bypass
+#      policy: one_factor
+      subject: group:admin
+#    - domain: grafana.example.com
+      policy: two_factor
+
+session:
+  #domain: apache-httpd.local
+  name: EXAMPLE_session
+  # This secret can also be set using the env variables AUTHELIA_SESSION_SECRET_FILE
+  secret: my_secret_value
+  expiration: 1M # 1 month
+  inactivity: 2w # 2 week
+  #domain: example.com # Should match whatever your root protected domain is   #deprecated
+  cookies:
+    - domain: example.remote
+      authelia_url: https://authelia-auth.example.remote
+#      default_redirection_url: http://apache-httpd.local:80
+#      secure: false
+      same_site: 'lax'
+
+regulation:
+  max_retries: 3
+  find_time: 120
+  ban_time: 300
+
+storage:
+  encryption_key: a_very_important_secret
+  local:
+    path: /config/db.sqlite3
+
+notifier:
+  #smtp:
+    #username: user
+    # This secret can also be set using the env variables AUTHELIA_NOTIFIER_SMTP_PASSWORD_FILE
+    #password: password
+    #host: smtp-with-tls.mail.example.com
+    #port: 25
+    #sender: email@example.com
+  filesystem:
+    filename: /config/notification.txt
+

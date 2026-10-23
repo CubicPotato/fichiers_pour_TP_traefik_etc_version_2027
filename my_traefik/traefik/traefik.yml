@@ -1,0 +1,27 @@
+# this is a static configuration file for traefik : entrypoints, providers
+
+debug: true
+
+api:
+  dashboard: true
+  insecure: true
+
+entryPoints:
+#  web:
+#    address: ":80"
+#    http:
+#      redirections:
+#        entryPoint:
+#          to: websecure
+
+  websecure:
+    address: ":443"
+#   address: ":9091"
+
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
+  file:
+    filename: "/srv/traefik/dynamic.yml"
+

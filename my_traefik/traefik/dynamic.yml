@@ -1,0 +1,98 @@
+# this a dynamic configuration file for traefik : routers, services, middlewares
+
+debug: true
+
+http:
+  routers:
+
+    traefik-router:
+      service: traefik-service
+      rule: Host(`traefik-service.example.remote`)
+      entryPoints:
+#        - web
+        - websecure
+      tls: {}    # Active TLS sans forcer de domaine spécifique
+#      tls:
+#        domains:
+#        - main: "traefik.example.localhost"
+#      tls: true
+
+    whoami-router:
+      service: whoami-service
+      rule: Host(`whoami.example.remote`)
+      entryPoints:
+        - websecure
+      tls: {}    # Active TLS sans forcer de domaine spécifique
+#      tls:
+#        domains:
+#        - main: "traefik.example.localhost"
+#      tls: true
+      middlewares:
+        - authelia-auth
+
+
+    authelia-auth-router:
+      service: authelia-auth-service
+      rule: Host(`authelia-auth.example.remote`)
+      entryPoints:
+        - websecure
+      tls: {}    # Active TLS sans forcer de domaine spécifique
+#      tls:
+#        domains:
+#        - main: "traefik.example.localhost"
+#      tls: true
+
+
+    lldap-router:
+      service: lldap-service
+      rule: Host(`lldap.example.remote`)
+      entryPoints:
+        - websecure
+      tls: {}    # Active TLS sans forcer de domaine spécifique
+#      tls:
+#        domains:
+#        - main: "traefik.example.localhost"
+#      tls: true
+
+
+
+  services:
+    traefik-service:
+      loadBalancer:
+        servers:
+        - url: http://traefik:8080   ## c’est le nom du container traefik sur le port interne 8080. Utile pour l'administration
+
+    whoami-service:
+      loadBalancer:
+        servers:
+        - url: http://whoami:80   ## c’est le nom du container whoami
+
+
+    authelia-auth-service:
+      loadBalancer:
+        servers:
+        - url: http://authelia-auth:9091     # page de login du container authelia-auth sur le port interne 9191
+
+    lldap-service:
+      loadBalancer:
+        servers:
+        - url: http://lldap:17170   ## c’est le nom du container lldap sur le port interne 17170. Utile pour l'administration
+
+
+
+  middlewares:
+    authelia-auth:
+      forwardAuth:
+#        address: "http://authelia-auth.example.localhost:9091/api/verify"      # Authelia's verification endpoint 
+        address: "http://authelia-auth:9091/api/verify?rd=https://authelia-auth.example.remote"
+        trustForwardHeader: true    # Trust headers from Traefik 
+        authResponseHeaders:
+          - Remote-User
+          - Remote-Groups
+          - Remote-Name
+          - Remote-Email
+
+tls:
+  certificates:
+    - certFile: /srv/traefik/traefik_example_localhost.crt
+      keyFile: /srv/traefik/traefik_example_localhost.key
